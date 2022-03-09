@@ -1,44 +1,77 @@
-import { click } from "@testing-library/user-event/dist/click";
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 // 上に行けば行くほど子コンポーネント
 // 子コンポーネント
-class Square extends React.Component {
-  constructor(props) {
-    //   constructorを定義する際は常にsuperを呼ぶ
-    super(props);
-    // state=保持したい値
-    this.state = { value: null };
-  }
+// class Square extends React.Component {
 
-  render() {
+//   constructor(props) {
+//     //   constructorを定義する際は常にsuperを呼ぶ
+//     super(props);
+//     // state=保持したい値
+//     this.state = { value: null };
+//   }
+
+//   render() {
+//     return (
+//       <button
+//         className="square"
+//         //   setStateで保持したい値をセットする
+//         // onClick={() => this.setState({ value: "X" })}
+//         onClick={() => this.props.onClick()}
+//       >
+//         {this.state.value}
+//       </button>
+//     );
+//   }
+// }
+
+// ボタンをあらわすクラス.
+// ボタンをクリックすると、親コンポーネントから渡された値を表示する関数
+// render機能のみの場合は関数化する
+function Square(props) {
+  return (
+    <button className="square" onClick={props.onClick}>
+      {props.value}
+    </button>
+  );
+}
+// 親コンポーネント↓↓
+/**
+ *  表示部分をあらわすクラス
+ * */
+class Board extends React.Component {
+  //   constructor(props) {
+  //     super(props);
+  //     this.state = {
+  //       squares: Array(9).fill(null),
+  //       xIsNext: true,
+  //     };
+  //   }
+
+  /**
+   * マス目に記号を入力する
+   * @param {*} i
+   * @returns - props
+   */
+  //   squaresとonClickプロパティを受け取るメソッド
+  renderSquare(i) {
     return (
-      <button
-        className="square"
-        //   setStateで保持したい値をセットする
-        onClick={() => this.setState({ value: "X" })}
-      >
-        {this.state.value}
-      </button>
+      <Square
+        value={this.props.squares[i]}
+        onClick={() => this.props.onClick(i)}
+      />
     );
   }
-}
-// 親コンポーネント
-class Board extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      squares: Array(9).fill(null),
-    };
-  }
-
-  renderSquare(i) {
-    return <Square value={i} />;
-  }
 
   render() {
-    const status = "Next player: X";
+    const winner = calculateWinner(this.state.squares);
+    let status;
+    if (winner) {
+      status = `勝者は${winner}です`;
+    } else {
+      status = `次のプレイヤーは${this.state.xIsNext ? `X` : `O`}`;
+    }
 
     return (
       <div>
@@ -63,20 +96,97 @@ class Board extends React.Component {
   }
 }
 
+/**
+ * ゲームの勝敗を決定するクラス.
+ */
 class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      history: [
+        {
+          squares: Array(9).fill(null),
+        },
+      ],
+      xIsNext: true,
+    };
+  }
+
+  handleClick(i) {
+    const history = this.state.history;
+    const current = history[history.length - 1];
+    const squares = this.state.squares.slice();
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+    squares[i] = this.state.xIsNext ? `X` : `O`;
+    // pushの代わりに、配列を直接更新しないconcatを仕様する
+    this.setState({
+      history: history.concat([
+        {
+          squares: squares,
+        },
+      ]),
+      xIsNext: !this.state.xIsNext,
+    });
+  }
+
   render() {
+    const history = this.state.history;
+    const current = history[history.length - 1];
+    const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ? `Go to move#${move}` : `Go to game start`;
+      return (
+        <li>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      );
+    });
+
+    let status;
+    if (winner) {
+      status = `勝者：${winner}`;
+    } else {
+      status = `次のプレイヤー：${this.state.xIsNext ? `X` : `O`}`;
+    }
+
     return (
       <div className="game">
         <div className="game-board">
-          <Board />
+          <Board
+            squares={current.squares}
+            onClick={(i) => this.handleClick(i)}
+          />
         </div>
         <div className="game-info">
-          <div>{/* status */}</div>
+          <div>{status}</div>
           <ol>{/* TODO */}</ol>
         </div>
       </div>
     );
   }
+}
+
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
 }
 
 // ========================================
