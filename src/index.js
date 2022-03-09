@@ -1,34 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
-// 上に行けば行くほど子コンポーネント
-// 子コンポーネント
-// class Square extends React.Component {
 
-//   constructor(props) {
-//     //   constructorを定義する際は常にsuperを呼ぶ
-//     super(props);
-//     // state=保持したい値
-//     this.state = { value: null };
-//   }
-
-//   render() {
-//     return (
-//       <button
-//         className="square"
-//         //   setStateで保持したい値をセットする
-//         // onClick={() => this.setState({ value: "X" })}
-//         onClick={() => this.props.onClick()}
-//       >
-//         {this.state.value}
-//       </button>
-//     );
-//   }
-// }
-
-// ボタンをあらわすクラス.
-// ボタンをクリックすると、親コンポーネントから渡された値を表示する関数
-// render機能のみの場合は関数化する
 function Square(props) {
   return (
     <button className="square" onClick={props.onClick}>
@@ -36,25 +9,8 @@ function Square(props) {
     </button>
   );
 }
-// 親コンポーネント↓↓
-/**
- *  表示部分をあらわすクラス
- * */
-class Board extends React.Component {
-  //   constructor(props) {
-  //     super(props);
-  //     this.state = {
-  //       squares: Array(9).fill(null),
-  //       xIsNext: true,
-  //     };
-  //   }
 
-  /**
-   * マス目に記号を入力する
-   * @param {*} i
-   * @returns - props
-   */
-  //   squaresとonClickプロパティを受け取るメソッド
+class Board extends React.Component {
   renderSquare(i) {
     return (
       <Square
@@ -65,17 +21,8 @@ class Board extends React.Component {
   }
 
   render() {
-    const winner = calculateWinner(this.state.squares);
-    let status;
-    if (winner) {
-      status = `勝者は${winner}です`;
-    } else {
-      status = `次のプレイヤーは${this.state.xIsNext ? `X` : `O`}`;
-    }
-
     return (
       <div>
-        <div className="status">{status}</div>
         <div className="board-row">
           {this.renderSquare(0)}
           {this.renderSquare(1)}
@@ -96,9 +43,6 @@ class Board extends React.Component {
   }
 }
 
-/**
- * ゲームの勝敗を決定するクラス.
- */
 class Game extends React.Component {
   constructor(props) {
     super(props);
@@ -115,12 +59,11 @@ class Game extends React.Component {
   handleClick(i) {
     const history = this.state.history;
     const current = history[history.length - 1];
-    const squares = this.state.squares.slice();
+    const squares = current.squares.slice();
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
-    squares[i] = this.state.xIsNext ? `X` : `O`;
-    // pushの代わりに、配列を直接更新しないconcatを仕様する
+    squares[i] = this.state.xIsNext ? "X" : "O";
     this.setState({
       history: history.concat([
         {
@@ -137,9 +80,9 @@ class Game extends React.Component {
     const winner = calculateWinner(current.squares);
 
     const moves = history.map((step, move) => {
-      const desc = move ? `Go to move#${move}` : `Go to game start`;
+      const desc = move ? "Go to move #" + move : "Go to game start";
       return (
-        <li>
+        <li key={move}>
           <button onClick={() => this.jumpTo(move)}>{desc}</button>
         </li>
       );
@@ -147,9 +90,9 @@ class Game extends React.Component {
 
     let status;
     if (winner) {
-      status = `勝者：${winner}`;
+      status = "Winner: " + winner;
     } else {
-      status = `次のプレイヤー：${this.state.xIsNext ? `X` : `O`}`;
+      status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
 
     return (
@@ -162,12 +105,16 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
   }
 }
+
+// ========================================
+
+ReactDOM.render(<Game />, document.getElementById("root"));
 
 function calculateWinner(squares) {
   const lines = [
@@ -188,7 +135,3 @@ function calculateWinner(squares) {
   }
   return null;
 }
-
-// ========================================
-
-ReactDOM.render(<Game />, document.getElementById("root"));
